@@ -1,0 +1,12 @@
+[apilens]
+# Dotted import path to your FastAPI app object — same as you'd pass to uvicorn
+# Example: "myapp.main:app" for a file at myapp/main.py with a variable named app
+app = "myapp.main:app"
+
+# Directory where snapshot JSON files will be stored (relative to project root)
+# This folder will be created automatically and committed to your repo
+snapshots_dir = "openapi-snapshots"
+
+# Host and port for `apilens serve` (optional, these are the defaults)
+host = "127.0.0.1"
+port = 8765

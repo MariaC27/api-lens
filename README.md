@@ -1,8 +1,6 @@
 # ApiLens
 
-OpenAPI snapshot tracking and visual diff for FastAPI projects.
-
-ApiLens automatically captures versioned snapshots of your OpenAPI spec on every merge, provides a visual diff viewer, and posts PR comments summarizing what changed.
+Automatically generate versioned API snapshots on every merge. Explore changes between any two versions in a UI with color-coded diff highlighting. Built for FastAPI + TypeScript teams.
 
 ## Features
 
@@ -10,46 +8,39 @@ ApiLens automatically captures versioned snapshots of your OpenAPI spec on every
 - **Visual diff viewer** — color-coded UI showing new, removed, and modified endpoints with field-level detail
 - **PR comments** — posts a Markdown summary of API changes on every pull request
 - **AI prompts** — one-click copy of prompts to help update frontend TypeScript types
-- **Zero integration** — no changes needed to your FastAPI app; runs standalone
+- **Zero integration** — no changes to your FastAPI app; runs completely standalone
 
 ## Install
 
 ```bash
-pip install api-lens[serve]
+pip install openapi-lens[serve]
 ```
 
-## Quick Start
+## Setup
 
-### 1. Create `apilens.toml`
+### 1. Add the config and workflow files
 
-```toml
-[apilens]
-app = "myapp.main:app"        # dotted path to your FastAPI app object
-snapshots_dir = "openapi-snapshots"
-```
+**1a.** Copy [`apilens.toml`](apilens.toml) into your project root. Set `app` to the dotted import path of your FastAPI app (e.g. `myapp.main:app` — same as you'd pass to `uvicorn`). No secrets, safe to commit.
 
-### 2. Generate a snapshot manually
+**1b.** Copy the two workflow files from [`workflow-templates/`](workflow-templates/) into your `.github/workflows/`:
 
-```bash
-apilens snapshot
-```
+- **`openapi-snapshot.yml`** — runs on every push to `main`. Generates your OpenAPI spec, compares it to the last snapshot, and commits a new one only if something changed.
+- **`api-diff.yml`** — runs on every PR. Posts a comment showing exactly what endpoints and fields changed.
 
-### 3. Browse the diff viewer
+Both workflows use the built-in `GITHUB_TOKEN` — no secrets to configure.
+
+### 3. Browse the diff viewer locally
 
 ```bash
 apilens serve
 # → http://127.0.0.1:8765
 ```
 
-Optionally password-protect it:
+Point it at any repo that has an `openapi-snapshots/` directory. Optionally password-protect it:
 
 ```bash
 APILENS_PASSWORD=secret apilens serve
 ```
-
-### 4. Add to CI
-
-Copy the workflow templates from [`.github/workflows/`](.github/workflows/) into your repo. They require no secrets beyond the built-in `GITHUB_TOKEN`.
 
 ## CLI Reference
 
@@ -61,12 +52,9 @@ apilens serve                Start the visual diff viewer
 
 ## Disabling the PR Comment
 
-To temporarily disable the PR comment without deleting the workflow:
+To temporarily disable without deleting the workflow, add `false &&` to the `if:` condition in `api-diff.yml`:
 
 ```yaml
-# In .github/workflows/api-diff.yml, change:
-if: github.event_name == 'pull_request'
-# to:
 if: false && github.event_name == 'pull_request'
 ```
 

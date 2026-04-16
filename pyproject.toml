@@ -3,9 +3,9 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "api-lens"
-version = "1.0.0"
-description = "OpenAPI snapshot tracking and visual diff tool for FastAPI projects"
+name = "openapi-lens"
+version = "1.0.2"
+description = "Automatically generate versioned API snapshots on every merge. Explore changes in a UI with color-coded diff highlighting. Built for FastAPI + TypeScript teams."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -42,8 +42,8 @@ dev = [
 apilens = "apilens.cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/your-org/api-lens"
-Issues = "https://github.com/your-org/api-lens/issues"
+Homepage = "https://github.com/MariaC27/api-lens"
+Issues = "https://github.com/MariaC27/api-lens/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
