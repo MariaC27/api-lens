@@ -1,0 +1,128 @@
+name: API Diff
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - '!openapi-snapshots/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-diff-${{ hashFiles('**/requirements*.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-diff-
+
+      - name: Install app and api-lens
+        run: |
+          python -m venv venv
+          venv/bin/pip install -q --upgrade pip
+          venv/bin/pip install -q -e "."
+          venv/bin/pip install -q api-lens
+
+      - name: Generate head spec
+        run: venv/bin/apilens generate head_spec.json
+
+      - name: Fetch base spec from latest snapshot on main
+        run: |
+          git fetch origin main
+          python - <<'EOF'
+          import json, subprocess, glob, sys
+
+          # Get the latest snapshot from the main branch
+          result = subprocess.run(
+              ["git", "show", "origin/main:openapi-snapshots/"],
+              capture_output=True, text=True
+          )
+          # Fall back to local snapshots directory
+          files = sorted(glob.glob("openapi-snapshots/*.json"), reverse=True)
+          if not files:
+              print("No snapshots found — skipping diff.")
+              with open("base_spec.json", "w") as f:
+                  json.dump({}, f)
+              sys.exit(0)
+
+          with open(files[0]) as f:
+              data = json.load(f)
+          with open("base_spec.json", "w") as f:
+              json.dump(data.get("spec", {}), f, indent=2)
+          print(f"Base spec loaded from {files[0]}")
+          EOF
+
+      - name: Compute diff and post PR comment
+        run: |
+          python - <<'EOF'
+          import json, os, sys
+
+          try:
+              import httpx
+          except ImportError:
+              import urllib.request as _req
+
+          from apilens.compare import compare_specs
+          from apilens.format import as_pr_comment
+
+          with open("base_spec.json") as f:
+              base = json.load(f)
+          with open("head_spec.json") as f:
+              head = json.load(f)
+
+          diff = compare_specs(base, head)
+          comment = as_pr_comment(
+              diff,
+              base_label=os.environ.get("BASE_LABEL", "main"),
+              head_label=os.environ.get("HEAD_LABEL", "PR"),
+          )
+
+          pr_number = os.environ.get("PR_NUMBER")
+          repo = os.environ.get("GITHUB_REPOSITORY")
+          token = os.environ.get("GITHUB_TOKEN")
+
+          if not all([pr_number, repo, token]):
+              print(comment)
+              sys.exit(0)
+
+          url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+          payload = json.dumps({"body": comment}).encode()
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Content-Type": "application/json",
+              "Accept": "application/vnd.github+json",
+          }
+          import urllib.request
+          req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  print(f"PR comment posted ({resp.status})")
+          except Exception as e:
+              print(f"Failed to post PR comment: {e}")
+              print(comment)
+          EOF
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_LABEL: ${{ github.base_ref }}
+          HEAD_LABEL: ${{ github.head_ref }}

@@ -1,0 +1,61 @@
+name: OpenAPI Snapshot
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - '!openapi-snapshots/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-snapshot-${{ hashFiles('**/requirements*.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-snapshot-
+
+      - name: Install app and api-lens
+        run: |
+          python -m venv venv
+          venv/bin/pip install -q --upgrade pip
+          # Install your application (adjust path as needed)
+          venv/bin/pip install -q -e "."
+          # Install api-lens
+          venv/bin/pip install -q api-lens
+
+      - name: Write snapshot
+        id: write_snapshot
+        run: |
+          venv/bin/apilens snapshot
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          # APILENS_APP can also be set in apilens.toml
+
+      - name: Commit snapshot
+        if: steps.write_snapshot.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add openapi-snapshots/
+          git commit -m "snapshot: openapi spec at ${{ github.sha }}"
+          git push
