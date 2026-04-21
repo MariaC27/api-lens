@@ -21,6 +21,8 @@ class Config:
     # Host/port for `apilens serve`
     host: str = "127.0.0.1"
     port: int = 8765
+    # Whether to post a comment on PRs summarizing API changes
+    pr_comments: bool = True
 
 
 def load(path: Path | None = None) -> Config:
@@ -35,4 +37,5 @@ def load(path: Path | None = None) -> Config:
         snapshots_dir=Path(section.get("snapshots_dir", "openapi-snapshots")),
         host=section.get("host", "127.0.0.1"),
         port=int(section.get("port", 8765)),
+        pr_comments=section.get("pr_comments", True),
     )

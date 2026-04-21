@@ -7,6 +7,9 @@ app = "myapp.main:app"
 # This folder will be created automatically and committed to your repo
 snapshots_dir = "openapi-snapshots"
 
+# Set to false to disable PR comments (default: true)
+pr_comments = true
+
 # Host and port for `apilens serve` (optional, these are the defaults)
 host = "127.0.0.1"
 port = 8765

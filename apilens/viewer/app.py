@@ -50,3 +50,19 @@ def _make_app(snapshots_dir: Path, password: Optional[str] = None) -> FastAPI:
         return compare_specs(base_spec, head_spec)
 
     return app
+
+
+def mount(app: FastAPI, path: str = "/apilens", password: Optional[str] = None, snapshots_dir: Optional[Path] = None) -> None:
+    """Mount the ApiLens viewer onto an existing FastAPI app.
+
+    Example:
+        import os
+        from apilens.viewer.app import mount
+        mount(app, path="/apilens", password=os.environ.get("APILENS_PASSWORD"))
+    """
+    from apilens.config import load
+
+    conf = load()
+    resolved_dir = snapshots_dir or conf.snapshots_dir
+    viewer = _make_app(snapshots_dir=resolved_dir, password=password)
+    app.mount(path, viewer)

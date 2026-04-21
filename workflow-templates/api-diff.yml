@@ -82,7 +82,13 @@ jobs:
               import urllib.request as _req
 
           from apilens.compare import compare_specs
+          from apilens.config import load
           from apilens.format import as_pr_comment
+
+          conf = load()
+          if not conf.pr_comments:
+              print("PR comments disabled in apilens.toml — skipping.")
+              sys.exit(0)
 
           with open("base_spec.json") as f:
               base = json.load(f)
