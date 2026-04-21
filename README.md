@@ -2,15 +2,15 @@
 
 Automatically generate versioned API snapshots on every merge. Explore changes between any two versions in a UI with color-coded diff highlighting. Built for FastAPI + TypeScript teams.
 
+[https://pypi.org/project/openapi-lens/](https://pypi.org/project/openapi-lens/)
+
 ---
 
 ## How It Works
 
-1. Every time code merges to `main`, a GitHub Actions workflow imports your FastAPI app, generates its OpenAPI spec, and compares it to the previous snapshot. If anything changed, it commits a new snapshot file to your repo under `openapi-snapshots/`.
+1. Every time code merges to `main`, a GitHub Actions workflow imports your FastAPI app, generates its OpenAPI spec, and compares it to the previous snapshot. If anything changed, it commits a new snapshot file to your repo under `openapi-snapshots/`. The `openapi-snapshots/` folder is created automatically by the workflow on first run.
 2. On every pull request, a second workflow computes the diff between the PR branch and the latest snapshot, and posts a comment summarizing what changed (comment can be disabled).
-3. Locally, run `apilens serve` to browse and compare any two snapshots in a visual UI.
-
-The `openapi-snapshots/` folder is created automatically by the workflow on first run.
+3. Install the PyPi package (openapi-lens), then locally run `apilens serve` to browse and compare any two snapshots in a visual UI. Optionally, add a few lines to deploy the viewer alongside your app.
 
 ---
 
@@ -44,7 +44,7 @@ pip3 install "openapi-lens[serve]"
 
 ### 2. Copy `apilens.toml` into your project root
 
-Grab [`apilens.toml`](apilens.toml) from this repo and place it at the root of your project. Edit one line:
+Grab `[apilens.toml](apilens.toml)` from this repo and place it at the root of your project. Edit one line:
 
 ```toml
 [apilens]
@@ -53,10 +53,10 @@ app = "myapp.main:app"   # ← change this to your FastAPI app's import path
 
 ### 3. Copy the workflow files into your `.github/workflows/`
 
-Grab both files from [`workflow-templates/`](workflow-templates/):
+Grab both files from `[workflow-templates/](workflow-templates/)`:
 
-- **`openapi-snapshot.yml`** — on every push to `main`, generates your spec and commits a new snapshot to `openapi-snapshots/` if anything changed
-- **`api-diff.yml`** — on every PR, posts a comment showing exactly what endpoints and fields changed
+- `**openapi-snapshot.yml**` — on every push to `main`, generates your spec and commits a new snapshot to `openapi-snapshots/` if anything changed
+- `**api-diff.yml**` — on every PR, posts a comment showing exactly what endpoints and fields changed
 
 Both use the built-in `GITHUB_TOKEN` — no secrets to configure.
 
@@ -67,7 +67,7 @@ Commit and push the three files (`apilens.toml`, `openapi-snapshot.yml`, `api-di
 - **On the next merge to `main`** — the snapshot workflow fires automatically. It imports your app, generates the spec, and commits the first `openapi-snapshots/<timestamp>.json` file to your repo. You can watch it run in your repo's Actions tab.
 - **On every subsequent PR** — the diff workflow fires automatically and posts a comment to the PR showing what changed.
 
-You don't need to do anything else to keep snapshots running — it's fully automatic from here.
+You don't need to do anything else to keep snapshots running, it's fully automatic from here.
 
 ### 5. Browse snapshots
 
