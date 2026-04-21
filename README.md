@@ -2,13 +2,17 @@
 
 Automatically generate versioned API snapshots on every merge. Explore changes between any two versions in a UI with color-coded diff highlighting. Built for FastAPI + TypeScript teams.
 
+---
+
 ## How It Works
 
 1. Every time code merges to `main`, a GitHub Actions workflow imports your FastAPI app, generates its OpenAPI spec, and compares it to the previous snapshot. If anything changed, it commits a new snapshot file to your repo under `openapi-snapshots/`.
-2. On every pull request, a second workflow computes the diff between the PR branch and the latest snapshot, and posts a comment summarizing what changed (comment can be disabled). 
+2. On every pull request, a second workflow computes the diff between the PR branch and the latest snapshot, and posts a comment summarizing what changed (comment can be disabled).
 3. Locally, run `apilens serve` to browse and compare any two snapshots in a visual UI.
 
 The `openapi-snapshots/` folder is created automatically by the workflow on first run.
+
+---
 
 ## Features
 
@@ -18,6 +22,8 @@ The `openapi-snapshots/` folder is created automatically by the workflow on firs
 - **AI prompts** — one-click copy of prompts to help update frontend TypeScript types
 - **Zero integration** — no changes to your FastAPI app; runs completely standalone
 
+---
+
 ## Requirements
 
 Python 3.10 or higher. Check yours with:
@@ -25,6 +31,8 @@ Python 3.10 or higher. Check yours with:
 ```bash
 python3 --version
 ```
+
+---
 
 ## Setup
 
@@ -36,21 +44,19 @@ pip3 install "openapi-lens[serve]"
 
 ### 2. Copy `apilens.toml` into your project root
 
-Grab `[apilens.toml](apilens.toml)` from this repo and place it at the root of your project. Edit one line:
+Grab [`apilens.toml`](apilens.toml) from this repo and place it at the root of your project. Edit one line:
 
 ```toml
 [apilens]
 app = "myapp.main:app"   # ← change this to your FastAPI app's import path
 ```
 
-This is the same path you'd pass to `uvicorn` — e.g. if you run `uvicorn ocular.main:app`, use `"ocular.main:app"`. No secrets, safe to commit.
-
 ### 3. Copy the workflow files into your `.github/workflows/`
 
-Grab both files from `[workflow-templates/](workflow-templates/)`:
+Grab both files from [`workflow-templates/`](workflow-templates/):
 
-- `**openapi-snapshot.yml**` — on every push to `main`, generates your spec and commits a new snapshot to `openapi-snapshots/` if anything changed
-- `**api-diff.yml**` — on every PR, posts a comment showing exactly what endpoints and fields changed
+- **`openapi-snapshot.yml`** — on every push to `main`, generates your spec and commits a new snapshot to `openapi-snapshots/` if anything changed
+- **`api-diff.yml`** — on every PR, posts a comment showing exactly what endpoints and fields changed
 
 Both use the built-in `GITHUB_TOKEN` — no secrets to configure.
 
@@ -65,7 +71,7 @@ You don't need to do anything else to keep snapshots running — it's fully auto
 
 ### 5. Browse snapshots
 
-Once at least two snapshots exist in your repo (after the first merge to `main`), pull the latest changes and choose one of the two options below.
+Once at least two snapshots exist in your repo, pull the latest changes and choose one of the two options below.
 
 > **Note:** the dropdowns will be empty until at least one snapshot exists. You need at least two snapshots to compare — meaning two separate merges to `main` that each changed the API.
 
@@ -92,16 +98,18 @@ mount(app, path="/apilens", password=os.environ.get("APILENS_PASSWORD"))
 
 Then set `APILENS_PASSWORD` in your server's environment variables. The viewer will be available at `yourapp.com/apilens` and anyone visiting it will be prompted for the password.
 
+---
+
 ## Disabling PR Comments
 
-Set `pr_comments = false` in your `apilens.toml`:
+If you want to disable the PR comments, set `pr_comments = false` in your `apilens.toml`:
 
 ```toml
 [apilens]
 pr_comments = false
 ```
 
-Set it back to `true` to re-enable.
+---
 
 ## License
 
