@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openapi-lens"
-version = "1.0.4"
+version = "1.0.5"
 description = "Version, diff, and visualize your OpenAPI spec"
 readme = "PYPI_README.md"
 license = { text = "MIT" }

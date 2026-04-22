@@ -58,7 +58,7 @@ Grab both files from `[workflow-templates/](workflow-templates/)`:
 - `**openapi-snapshot.yml**` — on every push to `main`, generates your spec and commits a new snapshot to `openapi-snapshots/` if anything changed
 - `**api-diff.yml**` — on every PR, posts a comment showing exactly what endpoints and fields changed
 
-Both use the built-in `GITHUB_TOKEN` — no secrets to configure.
+
 
 > **Set your app path:** both workflow files have an `APP_PATH` env var near the top of the job. Set it to the directory containing your FastAPI app's `setup.py` or `pyproject.toml` before committing:
 >
