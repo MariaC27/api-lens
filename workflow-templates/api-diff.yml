@@ -15,6 +15,10 @@ permissions:
 jobs:
   diff:
     runs-on: ubuntu-latest
+    env:
+      # Path to the directory containing your FastAPI app's setup.py / pyproject.toml.
+      # Examples: "./backend", "./api", "." (if your app is at the repo root)
+      APP_PATH: ./backend
 
     steps:
       - name: Checkout PR branch
@@ -39,31 +43,23 @@ jobs:
         run: |
           python -m venv venv
           venv/bin/pip install -q --upgrade pip
-          venv/bin/pip install -q -e "."
-          venv/bin/pip install -q api-lens
+          venv/bin/pip install -q -e "$APP_PATH"
+          venv/bin/pip install -q openapi-lens
 
       - name: Generate head spec
         run: venv/bin/apilens generate head_spec.json
 
-      - name: Fetch base spec from latest snapshot on main
+      - name: Generate base spec
         run: |
           git fetch origin main
-          python - <<'EOF'
-          import json, subprocess, glob, sys
 
-          # Get the latest snapshot from the main branch
-          result = subprocess.run(
-              ["git", "show", "origin/main:openapi-snapshots/"],
-              capture_output=True, text=True
-          )
-          # Fall back to local snapshots directory
+          # Try to load from the latest snapshot committed to main
+          venv/bin/python - <<'EOF'
+          import json, glob, sys
           files = sorted(glob.glob("openapi-snapshots/*.json"), reverse=True)
           if not files:
-              print("No snapshots found — skipping diff.")
-              with open("base_spec.json", "w") as f:
-                  json.dump({}, f)
+              print("No snapshots found — will generate from main branch.")
               sys.exit(0)
-
           with open(files[0]) as f:
               data = json.load(f)
           with open("base_spec.json", "w") as f:
@@ -71,9 +67,21 @@ jobs:
           print(f"Base spec loaded from {files[0]}")
           EOF
 
+          # If no snapshots exist yet, generate the base spec live from main
+          if [ ! -f base_spec.json ]; then
+            echo "Generating base spec from main branch..."
+            git worktree add /tmp/main-worktree origin/main
+            python -m venv /tmp/base-venv
+            /tmp/base-venv/bin/pip install -q --upgrade pip
+            /tmp/base-venv/bin/pip install -q -e "/tmp/main-worktree/$APP_PATH"
+            /tmp/base-venv/bin/pip install -q openapi-lens
+            (cd /tmp/main-worktree && /tmp/base-venv/bin/apilens generate "$GITHUB_WORKSPACE/base_spec.json")
+            git worktree remove /tmp/main-worktree
+          fi
+
       - name: Compute diff and post PR comment
         run: |
-          python - <<'EOF'
+          venv/bin/python - <<'EOF'
           import json, os, sys
 
           try:

@@ -60,6 +60,15 @@ Grab both files from `[workflow-templates/](workflow-templates/)`:
 
 Both use the built-in `GITHUB_TOKEN` — no secrets to configure.
 
+> **Set your app path:** both workflow files have an `APP_PATH` env var near the top of the job. Set it to the directory containing your FastAPI app's `setup.py` or `pyproject.toml` before committing:
+>
+> ```yaml
+> env:
+>   APP_PATH: ./backend  # ← change to your FastAPI app's directory
+> ```
+>
+> This is the only line you need to change in each workflow file.
+
 ### 4. Push to your repo
 
 Commit and push the three files (`apilens.toml`, `openapi-snapshot.yml`, `api-diff.yml`). From this point:

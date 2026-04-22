@@ -15,6 +15,10 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    env:
+      # Path to the directory containing your FastAPI app's setup.py / pyproject.toml.
+      # Examples: "./backend", "./api", "." (if your app is at the repo root)
+      APP_PATH: ./backend
 
     steps:
       - name: Checkout
@@ -37,10 +41,8 @@ jobs:
         run: |
           python -m venv venv
           venv/bin/pip install -q --upgrade pip
-          # Install your application (adjust path as needed)
-          venv/bin/pip install -q -e "."
-          # Install api-lens
-          venv/bin/pip install -q api-lens
+          venv/bin/pip install -q -e "$APP_PATH"
+          venv/bin/pip install -q openapi-lens
 
       - name: Write snapshot
         id: write_snapshot
